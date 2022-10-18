@@ -1,18 +1,23 @@
 #include <iostream>
 using namespace std;
 #include <locale.h>
+#include <windows.h>
 #include "Bagenda.h"
 #define MAX 100
+#define N_CPF 11
+#define N_CNPJ 14
+#define N_CEL 11
+#define N_TEL 10
 
 struct pessoal {
     int ID;
-    long long cel,CPF;
+    long long int cel, CPF;
     string nome;
 };
 
 struct comercial {
     int ID;
-    long int tel, CNPJ;
+    long long int tel, CNPJ;
     string nome;
 };
 
@@ -46,15 +51,37 @@ int tipo_pesquisa(){ //SELECIONA QUAL DADO A SER PESQUISADO
   }
 }
 
+bool conta_digitos(long long int dado, int n_esperado){ //VERIFICA SE O NÚMERO DE DÍGITOS É O CORRETO
+    int n_digitos = 0;
+    while(dado!=0){
+        dado /= 10;
+        n_digitos++;
+    }
+    if (n_digitos == n_esperado)
+        return true;
+    else
+        return false;
+}
+
 istream & operator >> (istream & in,pessoal &ag){//SOBRECARGA PARA INSERIR PESSOAL
   cout << "Insira o ID: ";
   in >> ag.ID;
   cout << "Insira o CPF: ";
-  in >> ag.CPF;
+  do{
+    in >> ag.CPF;
+    if (conta_digitos(ag.CPF, N_CPF) == false)
+        cout << "Número de dígitos inválido. Tente novamente. ";
+  }
+  while(conta_digitos(ag.CPF, N_CPF) == false);
   cout << "Insira o nome: ";
   in >> ag.nome;
   cout << "Insira o celular: ";
-  in >> ag.cel;
+  do{
+    in >> ag.cel;
+    if (conta_digitos(ag.cel, N_CEL) == false)
+        cout << "Número de dígitos inválido. Tente novamente. ";
+  }
+  while(conta_digitos(ag.cel, N_CEL) == false);
   return in;
 }
 
@@ -62,11 +89,21 @@ istream & operator >> (istream & in,comercial &ag){//SOBRECARGA PARA IMPRIMIR CO
   cout << "Insira o ID: ";
   in >> ag.ID;
   cout << "Insira o CNPJ: ";
-  in >> ag.CNPJ;
+  do{
+    in >> ag.CNPJ;
+    if (conta_digitos(ag.CNPJ, N_CNPJ) == false)
+        cout << "Número de dígitos inválido. Tente novamente. ";
+  }
+  while(conta_digitos(ag.CNPJ, N_CNPJ) == false);
   cout << "Insira o nome: ";
   in >> ag.nome;
   cout << "Insira o telefone: ";
-  in >> ag.tel;
+  do{
+    in >> ag.tel;
+    if (conta_digitos(ag.tel, N_TEL) == false)
+        cout << "Número de dígitos inválido. Tente novamente. ";
+  }
+  while(conta_digitos(ag.tel, N_TEL) == false);
   return in;
 }
 
@@ -98,40 +135,53 @@ ostream & operator << (ostream & out,comercial &ag){//SOBRECARGA PARA IMPRIMIR C
 
 int main() {
     setlocale(LC_ALL,"Portuguese");
-    agenda<pessoal,MAX> ag1;
-    agenda<comercial,MAX> ag2;
-    int max_pessoal, max_comercial;
+    int max_ag;
     int operacao;
+    cout << "Quantas posições para as agendas? ";
+    do{
+        cin >> max_ag;
+    }
+    while(max_ag < 1);
+    agenda<pessoal> ag1;
+    agenda<comercial> ag2;
+    ag1.itens = new pessoal[max_ag];
+    ag2.itens = new comercial[max_ag];
     inicializa_agenda(ag1);
     inicializa_agenda(ag2);
     string tipo_operacao;
-    
+
     do {
       //system("cls");
       cout << "\n\nSelecione uma operação:\n1 - Inserir item\n2 - Remover item\n3 - Pesquisar\n4 - Ordenar agenda\n5 - Mostrar todos os itens\n6 - Encerrar\n";
       cin >> operacao;
 
       switch(operacao) {  //ESCOLHE A OPERAÇÃO A SER REALIZADA
-      
+
       case 1:  //OPERAÇÃO DE INSERÇÃO
         tipo_operacao="inserir";
-        
+
         if(tipo_contato(tipo_operacao)==1){  //INSERIR TIPO PESSOAL
           pessoal ag_temp1;
           cin>>ag_temp1;
-          insere(ag1, ag_temp1);
+          if (insere(ag1, ag_temp1, max_ag) == true)
+            cout << "Item inserido com sucesso";
+          else
+            cout << "Erro: não foi possível inserir o item na agenda";
         }
         else{ // INSERE TIPO COMERCIAL
           comercial ag_temp2;
           cin>>ag_temp2;
-          insere(ag2, ag_temp2);
+          if (insere(ag2, ag_temp2, max_ag) == true)
+            cout << "Item inserido com sucesso";
+          else
+            cout << "Erro: não foi possível inserir os dados na agenda";
         }
         break;
 //-----------------------------------------------------------------------------------
         case 2: //OPERAÇÃO DE REMOÇÃO
           int ID_pesquisa;
           tipo_operacao="remover";
-          
+
           if(tipo_contato(tipo_operacao)==1){  //REMOVE TIPO PESSOAL
             pessoal ag_temp1;
 
@@ -140,10 +190,10 @@ int main() {
           }
           else{ // REMOVE TIPO COMERCIAL
             comercial ag_temp2;
-            
+
             cout<<"Digite o ID a ser excluído: ";
             cin>>ID_pesquisa;
-            
+
             ag_temp2.ID=0;
             ag_temp2.CNPJ=0;
             ag_temp2.nome="";
@@ -157,7 +207,7 @@ int main() {
         tipo_operacao="pesquisar";
         int id=0;
         string nome="";
-          
+
         if(tipo_contato(tipo_operacao)==1){  //PESQUISA TIPO PESSOAL
           if(tipo_pesquisa()==1){
             cout<<"Digite o ID: ";
@@ -168,8 +218,8 @@ int main() {
             cout<<"Digite o nome: ";
             cin>>nome;
             pesquisa(ag1,id,nome);
-          }  
-        }  
+          }
+        }
         else{ //PESQUISA TIPO COMERCIAL
           if(tipo_pesquisa()==1){
             cout<<"Digite o ID: ";
@@ -186,7 +236,7 @@ int main() {
         }
 //--------------------------------------------------------------------------------------------
         case 4:
-          
+
         break;
 
         case 5:
@@ -203,6 +253,7 @@ int main() {
         }
     }
    while(operacao != 6);
-
+    delete []ag1.itens;
+    delete []ag2.itens;
     return 0;
 }
